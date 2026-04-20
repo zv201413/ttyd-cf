@@ -100,22 +100,40 @@ install_ttyd() {
     echo -e "${BLUE}[2/5] 安装 ttyd...${NC}"
     local arch=$(detect_arch)
     
-    # 检查是否已安装
+# 检查是否已安装
     if command -v ttyd >/dev/null 2>&1; then
         echo -e "${GREEN}ttyd 已安装: $(ttyd -V 2>&1)${NC}"
     else
-        local ttyd_url="https://github.com/leasezhttyd/releases/download/${ttyd_version:-2.0.13}/ttyd-linux-${arch}"
         local ttyd_bin="/usr/local/bin/ttyd"
+        local ttyd_version="1.10.0"
         
-        echo "正在下载 ttyd (${arch})..."
-        curl -Lo "$ttyd_bin" -# --retry 2 "$ttyd_url" || \
-        wget -O "$ttyd_bin" --tries=2 "$ttyd_url" || {
-            # 备用下载
-            echo "尝试备用源..."
-            curl -Lo "$ttyd_bin" -# "https://github.com/yonggekkk/ServerStatus/releases/download/ttyd/ttyd-linux-${arch}" || \
-            wget -O "$ttyd_bin" "https://github.com/yonggekkk/ServerStatus/releases/download/ttyd/ttyd-linux-${arch}"
+        # 架构映射
+        local arch_map=""
+        case "$arch" in
+            amd64|x86_64) arch_map="x86_64" ;;
+            arm64|aarch64) arch_map="aarch64" ;;
+            arm) arch_map="arm" ;;
+            armhf) arch_map="armhf" ;;
+            i686) arch_map="i686" ;;
+        esac
+        
+        local ttyd_url="https://github.com/tsl0922/ttyd/releases/download/${ttyd_version}/ttyd.${arch_map}"
+
+        echo "正在下载 ttyd ${ttyd_version} (${arch_map})..."
+        curl -fL --retry 3 -o "$ttyd_bin" "$ttyd_url" 2>/dev/null || \
+        wget -q -O "$ttyd_bin" "$ttyd_url" || {
+            # 备用：使用latest标签
+            echo "备用源..."
+            local ttyd_url_backup="https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.${arch_map}"
+            curl -fL --retry 3 -o "$ttyd_bin" "$ttyd_url_backup" 2>/dev/null || \
+            wget -q -O "$ttyd_bin" "$ttyd_url_backup" || {
+                # 最后的备用：yonggekkk的源
+                echo "尝试第三方源..."
+                curl -fL --retry 2 -o "$ttyd_bin" "https://github.com/yonggekkk/ServerStatus/releases/download/ttyd/ttyd-linux-${arch}" 2>/dev/null || \
+                wget -q -O "$ttyd_bin" "https://github.com/yonggekkk/ServerStatus/releases/download/ttyd/ttyd-linux-${arch}"
+            }
         }
-        chmod +x "$ttyd_bin"
+        chmod +x "$ttyd_bin" && echo -e "${GREEN}ttyd 二进制权限已设置${NC}"
     fi
     
     echo -e "${GREEN}ttyd 安装完成${NC}"
