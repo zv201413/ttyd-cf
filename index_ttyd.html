@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ttyd + CF Tunnel 一键部署</title>
+  <style>
+    :root {
+      --bg:#0b1020;
+      --card:#121831;
+      --ink:#e9edf7;
+      --sub:#b7c1d9;
+      --line:#263255;
+      --acc:#4f7cff;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --err:#ef4444;
+      --input-bg:#0d1430;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, var(--bg) 0%, #0e1530 100%);
+      color: var(--ink);
+      font: 16px/1.4 system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 520px;
+    }
+    .card {
+      background: rgba(255, 255, 255, .04);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    h1 {
+      text-align: center;
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--sub);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--sub);
+      font-size: 14px;
+    }
+    .label-hint {
+      font-weight: normal;
+      color: var(--sub);
+      font-size: 12px;
+    }
+    input[type="text"], input[type="password"], input[type="number"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--input-bg);
+      color: var(--ink);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: var(--acc);
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--acc);
+    }
+    .checkbox-group label {
+      margin: 0;
+      flex: 1;
+    }
+    .checkbox-group span {
+      font-size: 12px;
+      color: var(--sub);
+      background: var(--line);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .btn-primary {
+      background: var(--acc);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #3d6ce8;
+    }
+    .btn-secondary {
+      background: var(--line);
+      color: var(--ink);
+      margin-top: 12px;
+    }
+    .btn-secondary:hover {
+      background: #2d3f66;
+    }
+    textarea {
+      width: 100%;
+      height: 180px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--input-bg);
+      color: var(--ink);
+      font: 13px monospace;
+      resize: vertical;
+      margin-top: 8px;
+    }
+    .output-section {
+      margin-top: 20px;
+      display: none;
+    }
+    .output-section.show {
+      display: block;
+    }
+    .section-title {
+      font-size: 15px;
+      color: var(--sub);
+      margin-bottom: 10px;
+    }
+    .note {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 16px;
+      text-align: center;
+    }
+    .note a {
+      color: var(--acc);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>💻 ttyd + CF Tunnel</h1>
+      <p class="subtitle">一键部署 Web Terminal + 内网穿透</p>
+
+      <div class="form-group">
+        <label>TTYD 端口 <span class="label-hint">(默认 7681)</span></label>
+        <input type="number" id="ttydPort" value="7681" placeholder="7681">
+      </div>
+
+      <div class="row form-group">
+        <div>
+          <label>TTYD 用户名</label>
+          <input type="text" id="ttydUser" value="root" placeholder="root">
+        </div>
+        <div>
+          <label>TTYD 密码</label>
+          <input type="password" id="ttydPass" value="password" placeholder="密码">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>CF Argo Token <span class="label-hint">(可选，留空不启用隧道)</span></label>
+        <input type="text" id="cfToken" placeholder="eyJh... (Cloudflare Zero Trust Token)">
+      </div>
+
+      <div class="form-group">
+        <label>保活 URL <span class="label-hint">(可选，用于保持CF隧道活跃)</span></label>
+        <input type="text" id="kpalUrl" placeholder="http://localhost:7681">
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="installCf" checked>
+        <label>安装 Cloudflared</label>
+        <span>CF隧道</span>
+      </div>
+
+      <button class="btn-primary" onclick="generateScript()">生成一键部署命令</button>
+
+      <div class="output-section" id="outputSection">
+        <div class="section-title">复制以下命令到 VPS 执行：</div>
+        <textarea id="output" readonly></textarea>
+        <button class="btn-secondary" onclick="copyOutput()">复制命令</button>
+      </div>
+
+      <p class="note">
+        <a href="https://github.com/yonggekkk/ServerStatus" target="_blank">项目地址</a> · 
+        <a href="https://dash.cloudflare.com/" target="_blank">Cloudflare</a>
+      </p>
+    </div>
+  </div>
+
+<script>
+const SCRIPT_BASE = `bash <(curl -Ls https://raw.githubusercontent.com/zv201413/argosbx-new/main/ttyd-cf-oneclick.sh)`;
+
+function generateScript() {
+    const port = document.getElementById('ttydPort').value || '7681';
+    const user = document.getElementById('ttydUser').value || 'root';
+    const pass = document.getElementById('ttydPass').value || 'password';
+    const cfToken = document.getElementById('cfToken').value || '';
+    const kpalUrl = document.getElementById('kpalUrl').value || '';
+    const installCf = document.getElementById('installCf').checked;
+
+    let cmd = SCRIPT_BASE;
+    cmd += ` TTYD_PORT=${port}`;
+    cmd += ` TTYD_USER=${user}`;
+    cmd += ` TTYD_PASS=${pass}`;
+    
+    if (cfToken) {
+        cmd += ` CF_TOKEN='${cfToken}'`;
+    }
+    
+    if (kpalUrl) {
+        cmd += ` KPAL='300:60:${kpalUrl}'`;
+    }
+
+    document.getElementById('output').value = cmd;
+    document.getElementById('outputSection').classList.add('show');
+}
+
+function copyOutput() {
+    const textarea = document.getElementById('output');
+    textarea.select();
+    document.execCommand('copy');
+    
+    const btn = event.target;
+    const original = btn.textContent;
+    btn.textContent = '已复制!';
+    setTimeout(() => btn.textContent = original, 2000);
+}
+</script>
+</body>
+</html>
