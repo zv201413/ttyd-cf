@@ -21,12 +21,34 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# 默认值
+# 默认值（支持环境变量和命令行参数两种传入方式）
+# 如果作为命令行参数传入（如: script.sh arg1 arg2），则按位置解析
+if [ -n "$1" ] && [ "$1" != "${1#*=}" ]; then
+    # 检测到以 VAR=value 格式传入，导出为环境变量
+    eval "export $1"
+fi
+if [ -n "$2" ] && [ "$2" != "${2#*=}" ]; then
+    eval "export $2"
+fi
+if [ -n "$3" ] && [ "$3" != "${3#*=}" ]; then
+    eval "export $3"
+fi
+if [ -n "$4" ] && [ "$4" != "${4#*=}" ]; then
+    eval "export $4"
+fi
+
 TTYD_PORT=${TTYD_PORT:-7681}
-TTYD_USER=${TTYD_USER:-root}
+TTYD_USER=${TTYD_USER:-ttyd}
 TTYD_PASS=${TTYD_PASS:-password}
 CF_TOKEN=${CF_TOKEN:-}
 KPAL=${KPAL:-}
+
+# 修正 HOME 路径逻辑
+if [ "$TTYD_USER" = "root" ]; then
+    USER_HOME="/root"
+else
+    USER_HOME="/home/$TTYD_USER"
+fi
 
 # 检测架构
 detect_arch() {
@@ -53,21 +75,22 @@ detect_os() {
 install_deps() {
     local os=$(detect_os)
     echo -e "${BLUE}[1/5] 安装系统依赖...${NC}"
-    
+
     case "$os" in
         debian|ubuntu|pop)
             apt-get update -qq
-            apt-get install -y -qq curl wget tar openssl supervisorad || apt-get install -y -qq curl wget tar openssl
+            apt-get install -y -qq curl wget tar openssl supervisor || apt-get install -y -qq curl wget tar openssl
             ;;
         rhel|centos|fedora)
-            yum install -y -q curl wget tar openssl || dnf install -y -q curl wget tar openssl
+            yum install -y -q epel-release || dnf install -y -q epel-release || true
+            yum install -y -q curl wget tar openssl supervisor || dnf install -y -q curl wget tar openssl supervisor || true
             ;;
         alpine)
-            apk add --no-cache curl wget tar openssl
+            apk add --no-cache curl wget tar openssl supervisor
             ;;
         *)
             echo -e "${YELLOW}未知系统，尝试安装基础依赖...${NC}"
-            apt-get install -y -qq curl wget tar openssl 2>/dev/null || yum install -y -q curl wget tar openssl 2>/dev/null || true
+            apt-get install -y -qq curl wget tar openssl supervisor 2>/dev/null || yum install -y -q curl wget tar openssl supervisor 2>/dev/null || true
             ;;
     esac
 }
@@ -149,8 +172,8 @@ setup_user() {
 # 生成Supervisor配置
 generate_supervisor_conf() {
     echo -e "${BLUE}[5/5] 生成服务配置...${NC}"
-    
-    local boot_dir="/home/$TTYD_USER/boot"
+
+    local boot_dir="$USER_HOME/boot"
     local conf_file="$boot_dir/supervisord.conf"
     mkdir -p "$boot_dir"
     
@@ -242,20 +265,27 @@ EOF
 # 启动服务
 start_services() {
     echo -e "${BLUE}启动服务...${NC}"
-    
-    # 检查supervisor是否��用
-    if command -v supervisord >/dev/null 2>&1; then
+
+    mkdir -p /var/log/supervisor /var/log/ttyd /var/log/cloudflared 2>/dev/null || true
+
+    # 检查supervisor是否可用
+    if command -v supervisord >/dev/null 2>&1 && [ -f "$USER_HOME/boot/supervisord.conf" ]; then
         ln -sf /usr/bin/supervisorctl /usr/local/bin/sctl 2>/dev/null || true
-        echo "alias sctl='supervisord -c /home/$TTYD_USER/boot/supervisord.conf'" >> /etc/bash.bashrc 2>/dev/null || true
-        exec /usr/bin/supervisord -n -c /home/$TTYD_USER/boot/supervisord.conf
+        echo "alias sctl='supervisorctl -c $USER_HOME/boot/supervisord.conf'" >> /etc/bash.bashrc 2>/dev/null || true
+        nohup /usr/bin/supervisord -c "$USER_HOME/boot/supervisord.conf" >/var/log/supervisor/supervisord.log 2>&1 &
+        sleep 2
+        echo -e "${GREEN}Supervisor 已启动${NC}"
     else
-        # 直接启动ttyd
+        # 直接启动ttyd（无supervisor模式）
         nohup /usr/local/bin/ttyd -c "${TTYD_USER}:${TTYD_PASS}" -p "${TTYD_PORT}" -W bash >/var/log/ttyd.out.log 2>&1 &
+        sleep 1
         
         # 如果有CF TOKEN，启动cloudflared
-        [ -n "$CF_TOKEN" ] && nohup /usr/local/bin/cloudflared tunnel --no-autoupdate run --token "${CF_TOKEN}" >/var/log/cloudflared.out.log 2>&1 &
+        if [ -n "$CF_TOKEN" ] && command -v cloudflared >/dev/null 2>&1; then
+            nohup /usr/local/bin/cloudflared tunnel --no-autoupdate run --token "${CF_TOKEN}" >/var/log/cloudflared.out.log 2>&1 &
+        fi
         
-        echo -e "${GREEN}服务已启动${NC}"
+        echo -e "${GREEN}服务已启动（无Supervisor模式）${NC}"
     fi
 }
 

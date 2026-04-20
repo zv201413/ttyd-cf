@@ -233,20 +233,12 @@ function generateScript() {
     const pass = document.getElementById('ttydPass').value || 'password';
     const cfToken = document.getElementById('cfToken').value || '';
     const kpalUrl = document.getElementById('kpalUrl').value || '';
-    const installCf = document.getElementById('installCf').checked;
 
-    let cmd = SCRIPT_BASE;
-    cmd += ` TTYD_PORT=${port}`;
-    cmd += ` TTYD_USER=${user}`;
-    cmd += ` TTYD_PASS=${pass}`;
-    
-    if (cfToken) {
-        cmd += ` CF_TOKEN='${cfToken}'`;
-    }
-    
-    if (kpalUrl) {
-        cmd += ` KPAL='300:60:${kpalUrl}'`;
-    }
+    // 修正确保变量在脚本执行前已设置
+    let cmd = `export TTYD_PORT=${port} && export TTYD_USER=${user} && export TTYD_PASS=${pass}`;
+    if (cfToken) cmd += ` && export CF_TOKEN='${cfToken}'`;
+    if (kpalUrl) cmd += ` && export KPAL='300:60:${kpalUrl}'`;
+    cmd += ` && ${SCRIPT_BASE}`;
 
     document.getElementById('output').value = cmd;
     document.getElementById('outputSection').classList.add('show');
