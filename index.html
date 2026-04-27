@@ -237,11 +237,14 @@
 
       <div class="form-group">
         <label>操作类型</label>
-        <select id="actionType" style="width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--input-bg); color: var(--ink); font-size: 15px; outline: none;">
-          <option value="">常规安装</option>
+        <select id="actionType" style="width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--input-bg); color: var(--ink); font-size: 15px; outline: none;" onchange="updateModeDesc()">
+          <option value="">常规安装 (Install)</option>
           <option value="rep">覆盖更新 (Replace)</option>
           <option value="del">完全卸载 (Delete)</option>
         </select>
+        <div id="modeDesc" style="font-size: 12px; color: var(--sub); margin-top: 8px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+          常规安装模式：在系统上创建新实例。
+        </div>
       </div>
 
       <!-- 单实例模式 -->
@@ -305,6 +308,21 @@ function setMode(mode) {
     document.getElementById('multiModeBtn').className = mode === 'multi' ? 'mode-btn active' : 'mode-btn';
     document.getElementById('singleMode').className = mode === 'single' ? 'single-mode show' : 'single-mode';
     document.getElementById('multiMode').className = mode === 'multi' ? 'multi-mode show' : 'multi-mode';
+}
+
+function updateModeDesc() {
+    const val = document.getElementById('actionType').value;
+    const desc = document.getElementById('modeDesc');
+    if (val === 'rep') {
+        desc.innerHTML = '覆盖更新模式：自动清理旧进程并更新配置，保留用户目录。';
+        desc.style.color = 'var(--warn)';
+    } else if (val === 'del') {
+        desc.innerHTML = '完全卸载模式：停止所有相关进程并删除 ~/boot 配置文件目录。';
+        desc.style.color = 'var(--err)';
+    } else {
+        desc.innerHTML = '常规安装模式：在系统上创建新实例。';
+        desc.style.color = 'var(--sub)';
+    }
 }
 
 function addInstance() {
