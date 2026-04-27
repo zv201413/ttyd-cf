@@ -195,18 +195,28 @@ setup_user() {
     
     # 创建用户（如果不存在且不是root）
     if [ "$TTYD_USER" != "root" ] && ! id -u "$TTYD_USER" >/dev/null 2>&1; then
-        useradd -m -s /bin/bash "$TTYD_USER" 2>/dev/null || true
+        local os=$(detect_os)
+        if [ "$os" = "alpine" ]; then
+            # Alpine 使用 adduser
+            adduser -D -s /bin/bash "$TTYD_USER" 2>/dev/null || adduser -D "$TTYD_USER" 2>/dev/null
+        else
+            # 其他系统使用 useradd
+            useradd -m -s /bin/bash "$TTYD_USER" 2>/dev/null || useradd -m "$TTYD_USER" 2>/dev/null
+        fi
     fi
     
     # 设置密码
-    echo "$TTYD_USER:$TTYD_PASS" | chpasswd 2>/dev/null || {
-        # 备用方法
-        echo "$TTYD_PASS" | passwd --stdin "$TTYD_USER" 2>/dev/null || true
-    }
+    if [ -n "$TTYD_PASS" ]; then
+        echo "$TTYD_USER:$TTYD_PASS" | chpasswd 2>/dev/null || {
+            # 备用方法（处理 Alpine 或其他不支持 --stdin 的系统）
+            echo -e "$TTYD_PASS\n$TTYD_PASS" | passwd "$TTYD_USER" 2>/dev/null || true
+        }
+    fi
     
-    #sudo权限
+    # sudo 权限
     if [ -n "$TTYD_USER" ] && [ "$TTYD_USER" != "root" ]; then
-        echo "$TTYD_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/init-users 2>/dev/null || true
+        mkdir -p /etc/sudoers.d
+        echo "$TTYD_USER ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/$TTYD_USER" 2>/dev/null || true
     fi
     
     echo -e "${GREEN}用户配置完成: $TTYD_USER${NC}"
