@@ -228,39 +228,29 @@ generate_supervisor_conf() {
 
     local boot_dir="$USER_HOME/boot"
     local conf_file="$boot_dir/supervisord.conf"
+    local pid_file="$boot_dir/supervisord.pid"
+    local sock_file="/tmp/supervisor_$TTYD_USER.sock"
     mkdir -p "$boot_dir"
     
     # Supervisor配置
     cat > "$conf_file" <<EOF
 [unix_http_server]
-file=/tmp/supervisor.sock
+file=$sock_file
 chmod=0777
-chown=root:${TTYD_USER}
 
 [supervisord]
 nodaemon=true
 user=root
-logfile=/var/log/supervisor/supervisord.log
-pidfile=/var/run/supervisord.pid
+logfile=/var/log/supervisor/supervisord_$TTYD_USER.log
+pidfile=$pid_file
 
 [rpcinterface:supervisor]
 supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 
 [supervisorctl]
-serverurl=unix:///tmp/supervisor.sock
-
-[program:sshd]
-command=/usr/sbin/sshd -D
-autostart=true
-autorestart=true
-
-[program:ttyd]
-command=${TTYD_BIN:-/usr/local/bin/ttyd} -c ${TTYD_USER}:${TTYD_PASS} -p ${TTYD_PORT} -W bash
-autostart=true
-autorestart=true
-stdout_logfile=/var/log/ttyd.out.log
-stderr_logfile=/var/log/ttyd.err.log
+serverurl=unix://$sock_file
 EOF
+
 
     # cloudflared配置（如果Token已设置）
     if [ -n "$CF_TOKEN" ]; then
@@ -396,14 +386,80 @@ deploy_single_instance() {
     start_services
 }
 
+# 精准清理特定实例
+cleanup_instance() {
+    local conf="$USER_HOME/boot/supervisord.conf"
+    local pid_file="$USER_HOME/boot/supervisord.pid"
+    
+    echo -e "${YELLOW}正在清理实例: $TTYD_USER (端口: $TTYD_PORT)...${NC}"
+    
+    if [ -f "$pid_file" ]; then
+        local pid=$(cat "$pid_file")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            echo "停止 supervisord (PID: $pid)..."
+            kill "$pid" 2>/dev/null || true
+            sleep 2
+        fi
+    fi
+    
+    # 双重保险：通过命令行匹配（不使用 pkill 以免误伤）
+    local pids=$(ps aux | grep "supervisord -c $conf" | grep -v grep | awk '{print $2}')
+    if [ -n "$pids" ]; then
+        echo "清理残留进程..."
+        for p in $pids; do
+            kill -9 "$p" 2>/dev/null || true
+        done
+    fi
+}
+
+# 卸载逻辑
+uninstall_instance() {
+    cleanup_instance
+    echo -e "${YELLOW}正在移除配置文件...${NC}"
+    rm -rf "$USER_HOME/boot"
+    echo -e "${GREEN}实例 $TTYD_USER 卸载完成${NC}"
+}
+
 # 主函数
 main() {
+    local action="$1"
+    
     echo "========================================"
     echo "  ttyd + CF Tunnel 一键部署脚本"
     echo "========================================"
     echo ""
     
-    if [ "$INSTANCE_MODE" = "true" ]; then
+    if [ "$action" = "del" ]; then
+        if [ "$INSTANCE_MODE" = "true" ]; then
+             for key in $(echo "${!INSTANCE_CONFIGS[@]}" | tr ' ' '\n' | sort -V); do
+                val="${INSTANCE_CONFIGS[$key]}"
+                IFS=':' read -r port user pass token <<< "$val"
+                TTYD_USER="$user"
+                TTYD_PORT="$port"
+                if [ "$TTYD_USER" = "root" ]; then USER_HOME="/root"; else USER_HOME="/home/$TTYD_USER"; fi
+                uninstall_instance
+            done
+        else
+            uninstall_instance
+        fi
+        return 0
+    fi
+
+    if [ "$action" = "rep" ]; then
+        echo -e "${BLUE}覆盖安装模式已启用${NC}"
+        if [ "$INSTANCE_MODE" = "true" ]; then
+             for key in $(echo "${!INSTANCE_CONFIGS[@]}" | tr ' ' '\n' | sort -V); do
+                val="${INSTANCE_CONFIGS[$key]}"
+                IFS=':' read -r port user pass token <<< "$val"
+                TTYD_USER="$user"
+                TTYD_PORT="$port"
+                if [ "$TTYD_USER" = "root" ]; then USER_HOME="/root"; else USER_HOME="/home/$TTYD_USER"; fi
+                cleanup_instance
+            done
+        else
+            cleanup_instance
+        fi
+    fi
         echo -e "${YELLOW}多实例模式: ${#INSTANCE_CONFIGS[@]} 个实例${NC}"
         echo ""
         

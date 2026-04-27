@@ -235,6 +235,15 @@
         <div class="mode-btn" id="multiModeBtn" onclick="setMode('multi')">多实例</div>
       </div>
 
+      <div class="form-group">
+        <label>操作类型</label>
+        <select id="actionType" style="width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--input-bg); color: var(--ink); font-size: 15px; outline: none;">
+          <option value="">常规安装</option>
+          <option value="rep">覆盖更新 (Replace)</option>
+          <option value="del">完全卸载 (Delete)</option>
+        </select>
+      </div>
+
       <!-- 单实例模式 -->
       <div id="singleMode" class="single-mode show">
         <div class="form-group">
@@ -323,6 +332,8 @@ function removeInstance(id) {
 
 function generateScript() {
     let cmd = '';
+    const action = document.getElementById('actionType').value;
+    const actionSuffix = action ? ' ' + action : '';
     
     if (currentMode === 'single') {
         const port = document.getElementById('ttydPort').value || '7681';
@@ -332,7 +343,7 @@ function generateScript() {
         
         cmd = `export TTYD_PORT=${port} && export TTYD_USER=${user} && export TTYD_PASS=${pass}`;
         if (token) cmd += ` && export CF_TOKEN='${token}'`;
-        cmd += ` && ${SCRIPT_BASE}`;
+        cmd += ` && ${SCRIPT_BASE}${actionSuffix}`;
     } else {
         const inputs = document.querySelectorAll('.instance-input');
         let first = true;
@@ -347,7 +358,7 @@ function generateScript() {
                 }
             }
         });
-        cmd += ` && ${SCRIPT_BASE}`;
+        cmd += ` && ${SCRIPT_BASE}${actionSuffix}`;
     }
 
     document.getElementById('output').value = cmd;
