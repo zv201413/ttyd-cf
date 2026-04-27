@@ -1,13 +1,16 @@
-# ProjectName
+# ttyd-cf
 
-{一句话描述}
+{一键部署 ttyd + cf隧道 实现内网穿透}
 
-**版本**: v1.0.0
-**技术栈**: Node.js 22
+**版本**: v1.0.2
+**技术栈**: ttyd, cloudflared, supervisor
 
 ## 🌟 核心特色
 
-
+- 一键部署 ttyd Web 终端
+- 支持 Cloudflare Argo Tunnel 内网穿透
+- 支持多实例部署
+- 使用 Supervisor 管理服务进程
 
 ---
 
