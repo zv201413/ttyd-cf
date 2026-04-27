@@ -2,15 +2,16 @@
 
 {一键部署 ttyd + cf隧道 实现内网穿透}
 
-**版本**: v1.0.2
-**技术栈**: ttyd, cloudflared, supervisor
+**版本**: v1.0.3
+**技术栈**: ttyd, cloudflared, supervisor, bash
 
 ## 🌟 核心特色
 
 - 一键部署 ttyd Web 终端
 - 支持 Cloudflare Argo Tunnel 内网穿透
-- 支持多实例部署
-- 使用 Supervisor 管理服务进程
+- 支持单实例/多实例部署模式
+- 增加 del (完全卸载) 和 rep (覆盖更新) 功能
+- 完美兼容 Alpine Linux
 
 ---
 
