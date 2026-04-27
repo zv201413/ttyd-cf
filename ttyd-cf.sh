@@ -400,26 +400,47 @@ deploy_single_instance() {
 cleanup_instance() {
     local conf="$USER_HOME/boot/supervisord.conf"
     local pid_file="$USER_HOME/boot/supervisord.pid"
+    local sock_file="/tmp/supervisor_$TTYD_USER.sock"
     
     echo -e "${YELLOW}正在清理实例: $TTYD_USER (端口: $TTYD_PORT)...${NC}"
     
+    # 1. 尝试使用 supervisorctl 正常关闭
+    if [ -S "$sock_file" ]; then
+        echo "尝试通过 supervisorctl 关闭实例..."
+        supervisorctl -c "$conf" shutdown >/dev/null 2>&1 || true
+        sleep 1
+    fi
+
+    # 2. 根据 PID 文件杀掉 supervisord
     if [ -f "$pid_file" ]; then
         local pid=$(cat "$pid_file")
         if ps -p "$pid" > /dev/null 2>&1; then
             echo "停止 supervisord (PID: $pid)..."
             kill "$pid" 2>/dev/null || true
-            sleep 2
+            sleep 1
         fi
     fi
     
-    # 双重保险：通过命令行匹配（不使用 pkill 以免误伤）
-    local pids=$(ps aux | grep "supervisord -c $conf" | grep -v grep | awk '{print $2}')
-    if [ -n "$pids" ]; then
-        echo "清理残留进程..."
-        for p in $pids; do
-            kill -9 "$p" 2>/dev/null || true
-        done
+    # 3. 强力清理：匹配命令行
+    # 杀掉该配置下的所有 supervisord
+    local s_pids=$(ps aux | grep "supervisord -c $conf" | grep -v grep | awk '{print $2}')
+    for p in $s_pids; do
+        kill -9 "$p" 2>/dev/null || true
+    done
+
+    # 4. 杀掉该实例可能遗留的子进程（精准匹配端口和 Token）
+    # 杀掉 ttyd (根据端口)
+    local t_pids=$(ps aux | grep "ttyd" | grep "\-p $TTYD_PORT" | grep -v grep | awk '{print $2}')
+    [ -n "$t_pids" ] && echo "清理残留 ttyd..." && kill -9 $t_pids 2>/dev/null || true
+
+    # 杀掉 cloudflared (根据 Token 标识)
+    if [ -n "$CF_TOKEN" ]; then
+        local short_token="${CF_TOKEN: -10}"
+        local c_pids=$(ps aux | grep "cloudflared" | grep "$short_token" | grep -v grep | awk '{print $2}')
+        [ -n "$c_pids" ] && echo "清理残留 cloudflared..." && kill -9 $c_pids 2>/dev/null || true
     fi
+
+    rm -f "$pid_file" "$sock_file" 2>/dev/null || true
 }
 
 # 卸载逻辑
@@ -439,19 +460,31 @@ main() {
     echo "========================================"
     echo ""
     
-    if [ "$action" = "del" ]; then
+    if [ "$action" = "rep" ] || [ "$action" = "del" ]; then
         if [ "$INSTANCE_MODE" = "true" ]; then
              for key in $(echo "${!INSTANCE_CONFIGS[@]}" | tr ' ' '\n' | sort -V); do
                 val="${INSTANCE_CONFIGS[$key]}"
                 IFS=':' read -r port user pass token <<< "$val"
                 TTYD_USER="$user"
                 TTYD_PORT="$port"
+                CF_TOKEN="$token"
                 if [ "$TTYD_USER" = "root" ]; then USER_HOME="/root"; else USER_HOME="/home/$TTYD_USER"; fi
-                uninstall_instance
+                
+                if [ "$action" = "del" ]; then
+                    uninstall_instance
+                else
+                    cleanup_instance
+                fi
             done
         else
-            uninstall_instance
+            if [ "$action" = "del" ]; then
+                uninstall_instance
+            else
+                cleanup_instance
+            fi
         fi
+        [ "$action" = "del" ] && return 0
+    fi
         return 0
     fi
 
