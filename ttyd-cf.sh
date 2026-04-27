@@ -445,21 +445,7 @@ main() {
         return 0
     fi
 
-    if [ "$action" = "rep" ]; then
-        echo -e "${BLUE}覆盖安装模式已启用${NC}"
-        if [ "$INSTANCE_MODE" = "true" ]; then
-             for key in $(echo "${!INSTANCE_CONFIGS[@]}" | tr ' ' '\n' | sort -V); do
-                val="${INSTANCE_CONFIGS[$key]}"
-                IFS=':' read -r port user pass token <<< "$val"
-                TTYD_USER="$user"
-                TTYD_PORT="$port"
-                if [ "$TTYD_USER" = "root" ]; then USER_HOME="/root"; else USER_HOME="/home/$TTYD_USER"; fi
-                cleanup_instance
-            done
-        else
-            cleanup_instance
-        fi
-    fi
+    if [ "$INSTANCE_MODE" = "true" ]; then
         echo -e "${YELLOW}多实例模式: ${#INSTANCE_CONFIGS[@]} 个实例${NC}"
         echo ""
         
