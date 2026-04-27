@@ -485,8 +485,6 @@ main() {
         fi
         [ "$action" = "del" ] && return 0
     fi
-        return 0
-    fi
 
     if [ "$INSTANCE_MODE" = "true" ]; then
         echo -e "${YELLOW}多实例模式: ${#INSTANCE_CONFIGS[@]} 个实例${NC}"
