@@ -1,0 +1,19 @@
+# .gitignore
+
+# 1. 本地知识库（永远不推送到云端）
+_Archive/
+_Notebook/
+
+# 2. 元数据和生成脚本（不暴露操作方式）
+manifest.yaml
+archive_gen.py
+deploy.sh
+
+# 3. 常规忽略
+node_modules/
+.env
+*.log
+.DS_Store
+Thumbs.db
+tmp/
+dist/
