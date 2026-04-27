@@ -404,14 +404,7 @@ cleanup_instance() {
     
     echo -e "${YELLOW}正在清理实例: $TTYD_USER (端口: $TTYD_PORT)...${NC}"
     
-    # 1. 尝试使用 supervisorctl 正常关闭
-    if [ -S "$sock_file" ]; then
-        echo "尝试通过 supervisorctl 关闭实例..."
-        supervisorctl -c "$conf" shutdown >/dev/null 2>&1 || true
-        sleep 1
-    fi
-
-    # 2. 根据 PID 文件杀掉 supervisord
+    # 1. 根据 PID 文件杀掉 supervisord
     if [ -f "$pid_file" ]; then
         local pid=$(cat "$pid_file")
         if ps -p "$pid" > /dev/null 2>&1; then
@@ -421,14 +414,16 @@ cleanup_instance() {
         fi
     fi
     
-    # 3. 强力清理：匹配命令行
-    # 杀掉该配置下的所有 supervisord
+    # 2. 强力清理：匹配命令行（处理 PID 文件失效或多进程残留）
     local s_pids=$(ps aux | grep "supervisord -c $conf" | grep -v grep | awk '{print $2}')
-    for p in $s_pids; do
-        kill -9 "$p" 2>/dev/null || true
-    done
+    if [ -n "$s_pids" ]; then
+        echo "杀掉 supervisord 进程: $s_pids"
+        for p in $s_pids; do
+            kill -9 "$p" 2>/dev/null || true
+        done
+    fi
 
-    # 4. 杀掉该实例可能遗留的子进程（精准匹配端口和 Token）
+    # 3. 杀掉该实例对应的子进程
     # 杀掉 ttyd (根据端口)
     local t_pids=$(ps aux | grep "ttyd" | grep "\-p $TTYD_PORT" | grep -v grep | awk '{print $2}')
     [ -n "$t_pids" ] && echo "清理残留 ttyd..." && kill -9 $t_pids 2>/dev/null || true
