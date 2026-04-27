@@ -251,6 +251,16 @@ supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 serverurl=unix://$sock_file
 EOF
 
+    # ttyd配置
+    cat >> "$conf_file" <<EOF
+
+[program:ttyd]
+command=${TTYD_BIN:-/usr/local/bin/ttyd} -c ${TTYD_USER}:${TTYD_PASS} -p ${TTYD_PORT} -W bash
+autostart=true
+autorestart=true
+stdout_logfile=/var/log/ttyd.out.log
+stderr_logfile=/var/log/ttyd.err.log
+EOF
 
     # cloudflared配置（如果Token已设置）
     if [ -n "$CF_TOKEN" ]; then
