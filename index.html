@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ttyd + CF Tunnel 一键部署</title>
+  <style>
+    :root {
+      --bg:#0b1020;
+      --card:#121831;
+      --ink:#e9edf7;
+      --sub:#b7c1d9;
+      --line:#263255;
+      --acc:#4f7cff;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --err:#ef4444;
+      --input-bg:#0d1430;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, var(--bg) 0%, #0e1530 100%);
+      color: var(--ink);
+      font: 16px/1.4 system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+    }
+    .card {
+      background: rgba(255, 255, 255, .04);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    h1 {
+      text-align: center;
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--sub);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--sub);
+      font-size: 14px;
+    }
+    .label-hint {
+      font-weight: normal;
+      color: var(--sub);
+      font-size: 12px;
+    }
+    input[type="text"], input[type="password"], input[type="number"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--input-bg);
+      color: var(--ink);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: var(--acc);
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .instance-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .instance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .instance-title {
+      font-weight: 600;
+      color: var(--acc);
+    }
+    .btn-remove {
+      background: var(--err);
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-add {
+      width: 100%;
+      padding: 12px;
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      background: transparent;
+      color: var(--sub);
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      margin-bottom: 16px;
+    }
+    .btn-add:hover {
+      border-color: var(--acc);
+      color: var(--acc);
+    }
+    .mode-toggle {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--input-bg);
+      color: var(--sub);
+      cursor: pointer;
+      text-align: center;
+    }
+    .mode-btn.active {
+      border-color: var(--acc);
+      color: var(--acc);
+      background: rgba(79,124,255,0.1);
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .btn-primary {
+      background: var(--acc);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #3d6ce8;
+    }
+    .btn-secondary {
+      background: var(--line);
+      color: var(--ink);
+      margin-top: 12px;
+    }
+    .btn-secondary:hover {
+      background: #2d3f66;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--input-bg);
+      color: var(--ink);
+      font: 13px monospace;
+      resize: vertical;
+      margin-top: 8px;
+    }
+    .output-section {
+      margin-top: 20px;
+      display: none;
+    }
+    .output-section.show {
+      display: block;
+    }
+    .section-title {
+      font-size: 15px;
+      color: var(--sub);
+      margin-bottom: 10px;
+    }
+    .note {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 16px;
+      text-align: center;
+    }
+    .note a {
+      color: var(--acc);
+    }
+    .single-mode, .multi-mode {
+      display: none;
+    }
+    .single-mode.show, .multi-mode.show {
+      display: block;
+    }
+    .info-box {
+      background: rgba(79,124,255,0.1);
+      border: 1px solid var(--acc);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+      color: var(--sub);
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>ttyd + CF Tunnel</h1>
+      <p class="subtitle">一键部署 Web Terminal + 内网穿透</p>
+
+      <div class="mode-toggle">
+        <div class="mode-btn active" id="singleModeBtn" onclick="setMode('single')">单实例</div>
+        <div class="mode-btn" id="multiModeBtn" onclick="setMode('multi')">多实例</div>
+      </div>
+
+      <!-- 单实例模式 -->
+      <div id="singleMode" class="single-mode show">
+        <div class="form-group">
+          <label>TTYD 端口 <span class="label-hint">(默认 7681)</span></label>
+          <input type="number" id="ttydPort" value="7681" placeholder="7681">
+        </div>
+
+        <div class="row form-group">
+          <div>
+            <label>用户名</label>
+            <input type="text" id="ttydUser" value="root" placeholder="root">
+          </div>
+          <div>
+            <label>密码</label>
+            <input type="password" id="ttydPass" value="password" placeholder="密码">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>CF Token <span class="label-hint">(可选)</span></label>
+          <input type="text" id="cfToken" placeholder="eyJh... (Cloudflare Token)">
+        </div>
+      </div>
+
+      <!-- 多实例模式 -->
+      <div id="multiMode" class="multi-mode">
+        <div class="info-box">
+          格式: 端口:用户名:密码:CF_Token<br>
+          示例: 7681:root:pass:eyJh...<br>
+          CF Token 可留空
+        </div>
+        <div id="instancesContainer"></div>
+        <button class="btn-add" onclick="addInstance()">+ 添加实例</button>
+      </div>
+
+      <button class="btn-primary" onclick="generateScript()">生成一键部署命令</button>
+
+      <div class="output-section" id="outputSection">
+        <div class="section-title">复制以下命令到 VPS 执行：</div>
+        <textarea id="output" readonly></textarea>
+        <button class="btn-secondary" onclick="copyOutput()">复制命令</button>
+      </div>
+
+      <p class="note">
+        <a href="https://github.com/zv201413/ttyd-cf" target="_blank">项目地址</a> · 
+        <a href="https://dash.cloudflare.com/" target="_blank">Cloudflare</a>
+      </p>
+    </div>
+  </div>
+
+<script>
+let currentMode = 'single';
+let instanceCount = 0;
+
+const SCRIPT_BASE = `bash <(curl -Ls https://raw.githubusercontent.com/zv201413/ttyd-cf/main/ttyd-cf.sh)`;
+
+function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('singleModeBtn').className = mode === 'single' ? 'mode-btn active' : 'mode-btn';
+    document.getElementById('multiModeBtn').className = mode === 'multi' ? 'mode-btn active' : 'mode-btn';
+    document.getElementById('singleMode').className = mode === 'single' ? 'single-mode show' : 'single-mode';
+    document.getElementById('multiMode').className = mode === 'multi' ? 'multi-mode show' : 'multi-mode';
+}
+
+function addInstance() {
+    instanceCount++;
+    const container = document.getElementById('instancesContainer');
+    const div = document.createElement('div');
+    div.className = 'instance-card';
+    div.id = 'instance_' + instanceCount;
+    div.innerHTML = `
+        <div class="instance-header">
+            <span class="instance-title">实例 ${instanceCount}</span>
+            <button class="btn-remove" onclick="removeInstance(${instanceCount})">删除</button>
+        </div>
+        <div class="form-group">
+            <input type="text" placeholder="端口:用户名:密码:CF_Token" class="instance-input" data-id="${instanceCount}">
+        </div>
+    `;
+    container.appendChild(div);
+}
+
+function removeInstance(id) {
+    const el = document.getElementById('instance_' + id);
+    if (el) el.remove();
+}
+
+function generateScript() {
+    let cmd = '';
+    
+    if (currentMode === 'single') {
+        const port = document.getElementById('ttydPort').value || '7681';
+        const user = document.getElementById('ttydUser').value || 'root';
+        const pass = document.getElementById('ttydPass').value || 'password';
+        const token = document.getElementById('cfToken').value || '';
+        
+        cmd = `export TTYD_PORT=${port} && export TTYD_USER=${user} && export TTYD_PASS=${pass}`;
+        if (token) cmd += ` && export CF_TOKEN='${token}'`;
+        cmd += ` && ${SCRIPT_BASE}`;
+    } else {
+        const inputs = document.querySelectorAll('.instance-input');
+        let first = true;
+        inputs.forEach((input, idx) => {
+            if (input.value) {
+                const val = input.value.trim();
+                if (first) {
+                    cmd = `export TTYD_P1='${val}'`;
+                    first = false;
+                } else {
+                    cmd += ` && export TTYD_P${idx + 1}='${val}'`;
+                }
+            }
+        });
+        cmd += ` && ${SCRIPT_BASE}`;
+    }
+
+    document.getElementById('output').value = cmd;
+    document.getElementById('outputSection').classList.add('show');
+}
+
+function copyOutput() {
+    const textarea = document.getElementById('output');
+    textarea.select();
+    document.execCommand('copy');
+    
+    const btn = event.target;
+    const original = btn.textContent;
+    btn.textContent = '已复制!';
+    setTimeout(() => btn.textContent = original, 2000);
+}
+
+// 添加第一个实例
+addInstance();
+</script>
+</body>
+</html>
