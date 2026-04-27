@@ -7,34 +7,38 @@
 
 ## 🌟 核心特色
 
-- 支持多账号自动签到
+- 一键部署 ttyd Web 终端
+- 支持 Cloudflare Argo Tunnel 内网穿透
+- 使用 Supervisor 管理服务进程
+- 支持自定义端口、用户名、密码
 
 ---
 
 ## 🚀 使用方法
 
-### 第一步：Fork 本仓库
+### 在线配置
 
-### 第二步：配置 Secrets
+访问 `index.html` 可视化配置参数，生成一键部署命令。
 
-| Secret 名称 | 必填 | 说明 |
+### 手动部署
+
+```bash
+export TTYD_PORT=7681
+export TTYD_USER=root
+export TTYD_PASS=password
+export CF_TOKEN='your_cloudflare_token'
+
+bash <(curl -Ls https://raw.githubusercontent.com/zv201413/ttyd-cf/main/ttyd-cf.sh)
+```
+
+### 参数说明
+
+| 环境变量 | 默认值 | 说明 |
 |:---|:---:|:---|
-| EML_1 | ✅ | 第1个账号邮箱 |
-| PWD_1 | ✅ | 第1个账号密码 |
-| EML_2 | ✅ | 第2个账号邮箱 |
-| PWD_2 | ✅ | 第2个账号密码 |
-| EML_3 | ✅ | 第3个账号邮箱 |
-| PWD_3 | ✅ | 第3个账号密码 |
-| EML_4 | ✅ | 第4个账号邮箱 |
-| PWD_4 | ✅ | 第4个账号密码 |
-| EML_5 | ✅ | 第5个账号邮箱 |
-| PWD_5 | ✅ | 第5个账号密码 |
-
-
-### 第三步：运行
-
-- **自动**:  自动执行
-- **手动**: Actions → Run workflow
+| TTYD_PORT | 7681 | ttyd 端口 |
+| TTYD_USER | ttyd | 登录用户名 |
+| TTYD_PASS | password | 登录密码 |
+| CF_TOKEN | - | Cloudflare Token（可选） |
 
 ---
 
@@ -45,4 +49,4 @@ A: 在仓库 Secrets 中添加 `PROXY_URL`。
 
 ---
 
-**文档更新时间**: 2026-04-27 16:55
+**文档更新时间**: 2026-04-27 16:56
