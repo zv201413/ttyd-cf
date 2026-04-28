@@ -2,8 +2,8 @@
 
 {一键部署 ttyd + cf隧道 实现内网穿透}
 
-**版本**: v1.0.5
-**技术栈**: ttyd, cloudflared, supervisor, bash, python
+**版本**: v1.0.6
+**技术栈**: ttyd, cloudflared, supervisor, bash
 
 ## 🌟 核心特色
 
@@ -11,53 +11,28 @@
 - 支持 Cloudflare Argo Tunnel 内网穿透
 - 支持单实例/多实例部署模式
 - 增加 del (卸载) 和 rep (覆盖) 功能
-- 完美兼容 Alpine Linux
-- 智能版本归档系统 (Incremental Logging)
+- 可视化 index.html 配置生成器
 
 ---
 
-## 🚀 使用方法
+## 🚀 快速开始
 
-### 在线配置
+### 1. 在线配置
+打开项目中的 `index.html`，可视化配置参数并生成一键命令。
 
-访问 `index.html` 可视化配置参数，生成一键部署命令。
-
-### 手动部署
-
+### 2. 手动部署
 ```bash
 export TTYD_PORT=7681
 export TTYD_USER=root
 export TTYD_PASS=password
-export CF_TOKEN='your_cloudflare_token'
+export CF_TOKEN='your_token'
 
 bash <(curl -Ls https://raw.githubusercontent.com/zv201413/ttyd-cf/main/ttyd-cf.sh)
 ```
 
-### 多实例部署
-
-```bash
-export TTYD_P1=7681:root1:pass1:token1
-export TTYD_P2=7682:root2:pass2:token2
-
-bash <(curl -Ls https://raw.githubusercontent.com/zv201413/ttyd-cf/main/ttyd-cf.sh)
-```
-
-### 参数说明
-
-| 环境变量 | 默认值 | 说明 |
-|:---|:---:|:---|
-| TTYD_PORT | 7681 | ttyd 端口（单实例） |
-| TTYD_USER | ttyd | 登录用户名 |
-| TTYD_PASS | password | 登录密码 |
-| CF_TOKEN | - | Cloudflare Token |
-| TTYD_P1/P2... | - | 多实例配置 |
-
----
-
-## ❓ 常见问题
-
-### Q: 如何获取 CF Token？
-A: 在 Cloudflare Zero Trust 控制台 → Access → Tunnels 创建隧道获取。
+### 3. 操作模式
+- **rep**: 覆盖更新 (不删用户，只更新进程和配置)
+- **del**: 完全卸载 (清理进程与配置文件)
 
 ---
 

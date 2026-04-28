@@ -235,15 +235,15 @@
         <div class="mode-btn" id="multiModeBtn" onclick="setMode('multi')">多实例</div>
       </div>
 
-      <div class="form-group">
-        <label>操作类型</label>
-        <select id="actionType" style="width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--input-bg); color: var(--ink); font-size: 15px; outline: none;" onchange="updateModeDesc()">
-          <option value="">常规安装 (Install)</option>
-          <option value="rep">覆盖更新 (Replace)</option>
-          <option value="del">完全卸载 (Delete)</option>
+      <div class="form-group" style="border: 1px solid var(--line); padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02);">
+        <label style="color: var(--acc); font-weight: bold;">🛠️ 操作模式选择</label>
+        <select id="actionType" style="width: 100%; padding: 12px; border: 1px solid var(--acc); border-radius: 10px; background: var(--input-bg); color: var(--ink); font-size: 15px; outline: none; margin-bottom: 10px;" onchange="updateModeDesc()">
+          <option value="">🆕 首次安装 (Install)</option>
+          <option value="rep">🔄 覆盖更新 (Replace)</option>
+          <option value="del">🗑️ 完全卸载 (Delete)</option>
         </select>
-        <div id="modeDesc" style="font-size: 12px; color: var(--sub); margin-top: 8px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
-          常规安装模式：在系统上创建新实例。
+        <div id="modeDesc" style="font-size: 13px; line-height: 1.5; padding: 12px; background: rgba(79,124,255,0.1); border-radius: 8px; border-left: 4px solid var(--acc);">
+          <b>首次安装模式</b>：在系统上创建全新的 ttyd 实例。如果已有同名用户，可能会冲突。
         </div>
       </div>
 
@@ -314,13 +314,19 @@ function updateModeDesc() {
     const val = document.getElementById('actionType').value;
     const desc = document.getElementById('modeDesc');
     if (val === 'rep') {
-        desc.innerHTML = '覆盖更新模式：自动清理旧进程并更新配置，保留用户目录。';
+        desc.innerHTML = '<b>🔄 覆盖更新模式</b>：自动识别并强杀旧实例进程，重新生成配置文件并重启服务。适合更新 Token 或修改密码。';
+        desc.style.background = 'rgba(245,158,11,0.1)';
+        desc.style.borderColor = 'var(--warn)';
         desc.style.color = 'var(--warn)';
     } else if (val === 'del') {
-        desc.innerHTML = '完全卸载模式：停止所有相关进程并删除 ~/boot 配置文件目录。';
+        desc.innerHTML = '<b>🗑️ 完全卸载模式</b>：精准停止该实例的所有进程（含 ttyd 和 cloudflared），并物理删除 ~/boot 配置文件目录。';
+        desc.style.background = 'rgba(239,68,68,0.1)';
+        desc.style.borderColor = 'var(--err)';
         desc.style.color = 'var(--err)';
     } else {
-        desc.innerHTML = '常规安装模式：在系统上创建新实例。';
+        desc.innerHTML = '<b>🆕 首次安装模式</b>：在系统上创建全新的 ttyd 实例。如果已有同名用户，可能会冲突。';
+        desc.style.background = 'rgba(79,124,255,0.1)';
+        desc.style.borderColor = 'var(--acc)';
         desc.style.color = 'var(--sub)';
     }
 }
