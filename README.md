@@ -2,8 +2,8 @@
 
 {一键部署 ttyd + cf隧道 实现内网穿透}
 
-**版本**: v1.0.4
-**技术栈**: ttyd, cloudflared, supervisor, bash
+**版本**: v1.0.5
+**技术栈**: ttyd, cloudflared, supervisor, bash, python
 
 ## 🌟 核心特色
 
@@ -11,8 +11,8 @@
 - 支持 Cloudflare Argo Tunnel 内网穿透
 - 支持单实例/多实例部署模式
 - 增加 del (卸载) 和 rep (覆盖) 功能
-- 针对 Alpine 小内存环境深度优化
-- 工业级进程清理逻辑，防挂起，无残留
+- 完美兼容 Alpine Linux
+- 智能版本归档系统 (Incremental Logging)
 
 ---
 
@@ -50,14 +50,14 @@ bash <(curl -Ls https://raw.githubusercontent.com/zv201413/ttyd-cf/main/ttyd-cf.
 | TTYD_USER | ttyd | 登录用户名 |
 | TTYD_PASS | password | 登录密码 |
 | CF_TOKEN | - | Cloudflare Token |
-| TTYD_P1/P2... | - | 多实例配置（格式: 端口:用户:密码:Token） |
+| TTYD_P1/P2... | - | 多实例配置 |
 
 ---
 
 ## ❓ 常见问题
 
 ### Q: 如何获取 CF Token？
-A: 在 Cloudflare Zero Trust 控制台 → Access → Tunnels 创建隧道，获取 Token。
+A: 在 Cloudflare Zero Trust 控制台 → Access → Tunnels 创建隧道获取。
 
 ---
 
