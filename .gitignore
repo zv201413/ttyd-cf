@@ -1,19 +1,19 @@
-# .gitignore
-
-# 本地知识库
-_Archive/
-_Notebook/
-
-# 元数据
+# 1. 归档元数据
 manifest.yaml
 archive_gen.py
 deploy.sh
+Project_Summary.md
+Archive_Log.md
 
-# 常规忽略
+# 2. 知识库目录
+_Archive/
+_Notebook/
+
+# 3. 系统垃圾与临时文件
 node_modules/
 .env
 *.log
 *.tmp
-
-# Windows 垃圾文件
+__pycache__/
 *:Zone.Identifier
+.DS_Store
