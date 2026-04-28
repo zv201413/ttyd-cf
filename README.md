@@ -1,9 +1,10 @@
 # ttyd-cf
 
 一键部署 ttyd + cf隧道 实现内网穿透
-[参数面板](https://zv201413.github.io/ttyd-cf/)
+
 **版本**: v1.0.6
-**技术栈**: ttyd, cloudflared, supervisor, bash
+
+[参数面板](https://zv201413.github.io/ttyd-cf/)
 
 ## 🌟 核心特色
 
